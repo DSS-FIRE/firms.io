@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>DSS FIRMS NASA</title>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+		<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+		<script src="Leaflet.CountrySelect.js"></script>
+
+		<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+		<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+        
+		<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+        <script src="Leaflet.PolylineMeasure.js"></script>
+        <link rel="stylesheet" href="Leaflet.PolylineMeasure.css" />
+		<link rel="shortcut icon" href="img/united-nations.png"/>
+
+		
+	</head>
+
+	<style>
+		html, body, #map {
+			padding:0px;
+			margin:0px;
+			height:100%;
+			width:100%;
+
+		}
+		.center {
+		text-align: center;
+		height:9%;
+		padding-top: 0px;
+		padding-bottom: 0px;
+		color: black;
+		font-size:70%;
+		font-family: Arial;
+		}
+		
+
+
+	</style>
+
+
+	<script type="text/javascript">
+	
+	function init(){	
+	
+
+	
+		var map = L.map('map', {
+		center: [14.77, -86.88],
+		zoom: 8,
+
+
+
+
+	});
+	
+	map.addControl(new L.Control.Fullscreen({
+    title: {
+        'false': 'View Fullscreen',
+        'true': 'Exit Fullscreen'
+		}
+		}));
+	
+
+
+	
+	var basemaps = {
+		
+		Base: L.tileLayer.wms('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png', {attribution: 'DSS © 2021 <a href="https://www.unspider.org/">UNSPIDER</a>' +'Tiles &copy; CartoDB',
+			layers: 'Carto-WMS'
+		}),
+	
+		Topography: L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+			layers: 'TOPO-WMS'
+		}),
+
+		Places: L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+			layers: 'OSM-Overlay-WMS'
+		}),
+
+		'Topography, and places': L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+			layers: 'TOPO-WMS,OSM-Overlay-WMS'
+		}),
+		
+		Imagery:	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox/satellite-v9',
+		tileSize: 512,
+		zoomOffset: -1
+		})
+
+	};
+	
+	
+
+		var VIIRS_NOAA20Hoy = L.tileLayer.wms("https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?",{
+			layers: 'VIIRS_NOAA20_Thermal_Anomalies_375m_All',format:'image/png',transparent:true, version:'1.1.1', attribution:"Provides VIIRS 375m Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>"
+		});
+
+		var MODISHoy = L.tileLayer.wms("https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?",{
+		layers:'MODIS_Combined_Thermal_Anomalies_All',format:'image/png',transparent:true,version:'1.1.1',attribution:"Provides MODIS (Rapid Response Collection) Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosViirs7d = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&&SYMBOLS=circle",{
+		layers:'fires_viirs_7',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1600,keepBuffer:500,attribution:"Provides VIIRS 375m Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosViirs72h = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle",{
+		layers:'fires_viirs_72',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1024,keepBuffer:500,attribution:"Provides VIIRS 375m Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosViirs48h = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle",{
+		layers:'fires_viirs_48',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1600,keepBuffer:500,attribution:"Provides VIIRS 375m Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosViirs24h = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle",{
+		layers:'fires_viirs_24',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1600,keepBuffer:500,attribution:"Provides VIIRS 375m Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosModis7d = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle&COLORS=250+200+50",{
+		layers:'fires_modis_7',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1600,keepBuffer:500,attribution:"Provides MODIS (Rapid Response Collection) Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosModis72h = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle&COLORS=250+200+50",{
+		layers:'fires_modis_72',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1024,keepBuffer:500,attribution:"Provides MODIS (Rapid Response Collection) Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",useCache:false,
+		});
+		
+		var IncendiosModis48h = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle&COLORS=250+200+50",{
+		layers:'fires_modis_48',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1600,keepBuffer:500,attribution:"Provides MODIS (Rapid Response Collection) Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+		var IncendiosModis24h = L.tileLayer.wms("https://firms.modaps.eosdis.nasa.gov/wms/?&MAP_KEY=2c88455c6d67df69f0df9fbf256e26d3&SIZE=4&SYMBOLS=circle&COLORS=250+200+50",{
+		layers:'fires_modis_24',format:'image/png',transparent:true,maxZoom:20,maxNativeZoom:9,tileSize:1600,keepBuffer:500,attribution:"Provides MODIS (Rapid Response Collection) Fires/Hotspots. <a href=http://earthdata.nasa.gov/firms>NASA FIRMS</a>",
+		});
+		
+
+		
+		var overlays = {
+			"VIIRS NOAA 20 Thermal Anomalies 375m - Hoy": VIIRS_NOAA20Hoy, 
+			"MODIS Combined Thermal Anomalies - Hoy": MODISHoy,
+			"VIIRS 375m Fires/Hotspots - 7Dias": IncendiosViirs7d,
+			"VIIRS 375m Fires/Hotspots - 72Horas": IncendiosViirs72h,
+			"VIIRS 375m Fires/Hotspots - 48Horas": IncendiosViirs48h,
+			"VIIRS 375m Fires/Hotspots - 24Horas": IncendiosViirs24h,
+			"MODIS Fires/Hotspots - 7Dias": IncendiosModis7d,
+			"MODIS Fires/Hotspots - 72Horas": IncendiosModis72h,
+			"MODIS Fires/Hotspots - 48Horas": IncendiosModis48h,
+			"MODIS Fires/Hotspots - 24Horas": IncendiosModis24h
+			
+	};
+
+		L.control.layers(basemaps, overlays, {}, {collapsed: false}).addTo(map);
+	
+
+	IncendiosModis24h.addTo(map);
+	IncendiosViirs24h.addTo(map);
+	VIIRS_NOAA20Hoy.addTo(map);
+	MODISHoy.addTo(map);
+	basemaps.Base.addTo(map);
+    L.control.scale ({maxWidth:240, metric:true, imperial:true, position: 'bottomleft'}).addTo (map);
+	
+	// logo star
+	L.Control.Watermark = L.Control.extend({
+    onAdd: function(map) {
+        var img = L.DomUtil.create('img');
+
+        img.src = 'img/UN-logo-en-reverse.svg';
+        img.style.width = '150px';
+
+        return img;
+    },
+
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+	});
+
+	L.control.watermark = function(opts) {
+    return new L.Control.Watermark(opts);
+	}
+
+	L.control.watermark({ position: 'bottomright' }).addTo(map);
+	// logo end
+		// logo2 star
+	L.Control.Watermark = L.Control.extend({
+    onAdd: function(map) {
+        var img = L.DomUtil.create('img');
+
+        img.src = 'img/new_logo.png';
+	
+        img.style.width = '165px';
+
+        return img;
+    },
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+	});
+	L.control.watermark = function(opts) {
+    return new L.Control.Watermark(opts);
+	}
+	L.control.watermark({ position: 'bottomright' }).addTo(map);
+	// logo2 end
+	// dist star
+
+
+            let polylineMeasure = L.control.polylineMeasure ({position:'topleft', unit:'kilometres', showBearings:true, clearMeasurementsOnStop: false, showClearControl: true, showUnitControl: true})
+            polylineMeasure.addTo (map);
+
+            function debugevent(e) { console.debug(e.type, e, polylineMeasure._currentLine) }
+
+            map.on('polylinemeasure:toggle', debugevent);
+            map.on('polylinemeasure:start', debugevent);
+            map.on('polylinemeasure:resume', debugevent);
+            map.on('polylinemeasure:finish', debugevent);
+            map.on('polylinemeasure:change', debugevent);
+            map.on('polylinemeasure:clear', debugevent);
+            map.on('polylinemeasure:add', debugevent);
+            map.on('polylinemeasure:insert', debugevent);
+            map.on('polylinemeasure:move', debugevent);
+            map.on('polylinemeasure:remove', debugevent);
+  
+	// dist end
+
+	// coord punto
+	var popup = L.popup();
+	function onMapClick(e) {
+    popup
+        .setLatLng(e.latlng) // Sets the geographical point where the popup will open.
+        .setContent("<strong>Coordenadas del punto:</strong><br> " +  e.latlng.lat.toString() + "," +  e.latlng.lng.toString()) // Sets the HTML content of the popup.
+        .openOn(map); // Adds the popup to the map and closes the previous one. 
+	}
+	map.on('dblclick', onMapClick);
+	// coord punto
+
+	// geojason div politica
+			var select = L.countrySelect({position: 'topright'});
+			
+
+			select.addTo(map);
+			
+			select.on('change', function(e){
+				if (e.feature === undefined){ //Do nothing on title
+					return;
+				}
+				var country = L.geoJson(e.feature);
+				if (this.previousCountry != null){
+					map.removeLayer(this.previousCountry);
+				}
+				this.previousCountry = country;
+
+				map.addLayer(country);
+				map.fitBounds(country.getBounds());
+				
+			});
+		}
+	</script>
+
+	<body onload="init()">
+
+
+		<div id="map">
+
+	 
+		</div>
+
+	</body>
+</html>
